@@ -33,3 +33,5 @@ You will find that components use classes like `bg-base-100`, `text-base-content
    git clone https://github.com/shivkantx/Cloudinary-SSH.git
    cd Cloudinary-SSH
    ```
+
+# for prisma open npx prisma studio
