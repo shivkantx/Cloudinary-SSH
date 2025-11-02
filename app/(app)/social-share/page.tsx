@@ -80,13 +80,13 @@ export default function SocialShare() {
 
   return (
     // 🌌 Main background container
-    <div className="min-h-screen bg-gradient-to-br from-base-200 via-base-300 to-base-100 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-linear-to-br from-base-200 via-base-300 to-base-100 flex items-center justify-center p-6">
       {/* 🧊 Glass-style card */}
       <div className="card w-full max-w-3xl bg-base-100/70 backdrop-blur-lg border border-primary/20 shadow-2xl rounded-3xl transition-all hover:shadow-primary/30">
         <div className="card-body space-y-6">
           {/* 🏷️ Header Section */}
           <div className="text-center space-y-2">
-            <h1 className="text-4xl font-extrabold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <h1 className="text-4xl font-extrabold bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">
               Social Media Image Creator
             </h1>
             <p className="text-base-content/70">
