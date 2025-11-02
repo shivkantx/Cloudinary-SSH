@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { CldImage } from "next-cloudinary";
 
+// ✅ Predefined image sizes for popular social media formats
 const socialFormats = {
   "Instagram Square (1:1)": { width: 1080, height: 1080, aspectRatio: "1:1" },
   "Instagram Portrait (4:5)": { width: 1080, height: 1350, aspectRatio: "4:5" },
@@ -14,6 +15,7 @@ const socialFormats = {
 type SocialFormat = keyof typeof socialFormats;
 
 export default function SocialShare() {
+  // 🧠 App state
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [selectedFormat, setSelectedFormat] = useState<SocialFormat>(
     "Instagram Square (1:1)"
@@ -22,10 +24,12 @@ export default function SocialShare() {
   const [isTransforming, setIsTransforming] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
 
+  // 🔁 Trigger transformation loader when format or image changes
   useEffect(() => {
     if (uploadedImage) setIsTransforming(true);
   }, [selectedFormat, uploadedImage]);
 
+  // 📤 Handle image upload to backend API
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -45,7 +49,7 @@ export default function SocialShare() {
       if (!response.ok) throw new Error("Failed to upload image");
 
       const data = await response.json();
-      setUploadedImage(data.publicId);
+      setUploadedImage(data.publicId); // ✅ Save uploaded image public ID
     } catch (error) {
       console.log(error);
       alert("Failed to upload image");
@@ -54,6 +58,7 @@ export default function SocialShare() {
     }
   };
 
+  // 💾 Download the transformed image
   const handleDownload = () => {
     if (!imageRef.current) return;
 
@@ -74,10 +79,12 @@ export default function SocialShare() {
   };
 
   return (
+    // 🌌 Main background container
     <div className="min-h-screen bg-gradient-to-br from-base-200 via-base-300 to-base-100 flex items-center justify-center p-6">
+      {/* 🧊 Glass-style card */}
       <div className="card w-full max-w-3xl bg-base-100/70 backdrop-blur-lg border border-primary/20 shadow-2xl rounded-3xl transition-all hover:shadow-primary/30">
         <div className="card-body space-y-6">
-          {/* Header */}
+          {/* 🏷️ Header Section */}
           <div className="text-center space-y-2">
             <h1 className="text-4xl font-extrabold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               Social Media Image Creator
@@ -88,7 +95,7 @@ export default function SocialShare() {
             </p>
           </div>
 
-          {/* Upload Section */}
+          {/* 📁 Upload Section */}
           <div className="space-y-3">
             <label className="font-medium text-sm text-base-content/70">
               Upload Image
@@ -98,17 +105,18 @@ export default function SocialShare() {
               onChange={handleFileUpload}
               className="file-input file-input-bordered file-input-primary w-full"
             />
+            {/* 🔄 Upload progress bar */}
             {isUploading && (
               <progress className="progress progress-primary w-full mt-2"></progress>
             )}
           </div>
 
-          {/* Show transformation options after upload */}
+          {/* ✨ Show transformation options after upload */}
           {uploadedImage && (
             <>
               <div className="divider my-4"></div>
 
-              {/* Format Selection */}
+              {/* 🎛️ Format Selection */}
               <div className="space-y-3">
                 <label className="font-medium text-sm text-base-content/70">
                   Choose Social Media Format
@@ -128,15 +136,17 @@ export default function SocialShare() {
                 </select>
               </div>
 
-              {/* Preview Section */}
+              {/* 🖼️ Image Preview Section */}
               <div className="mt-6">
                 <h3 className="text-lg font-semibold mb-3">Preview</h3>
                 <div className="relative rounded-2xl overflow-hidden border border-base-300 bg-base-200 flex justify-center items-center p-3 shadow-inner">
+                  {/* 🔁 Loader during transformation */}
                   {isTransforming && (
                     <div className="absolute inset-0 flex items-center justify-center bg-base-100/70 backdrop-blur-sm z-10">
                       <span className="loading loading-spinner loading-lg text-primary"></span>
                     </div>
                   )}
+                  {/* 🧩 Display uploaded image */}
                   <CldImage
                     width={socialFormats[selectedFormat].width}
                     height={socialFormats[selectedFormat].height}
@@ -153,7 +163,7 @@ export default function SocialShare() {
                 </div>
               </div>
 
-              {/* Download Button */}
+              {/* ⬇️ Download Button */}
               <div className="card-actions justify-end mt-6">
                 <button
                   className="btn btn-primary btn-wide shadow-md hover:shadow-lg hover:scale-[1.03] transition-all"
