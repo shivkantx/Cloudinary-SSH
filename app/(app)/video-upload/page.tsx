@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function VideoUpload() {
   const [file, setFile] = useState<File | null>(null);
@@ -26,9 +27,14 @@ export default function VideoUpload() {
 
     try {
       const response = await axios.post("/api/video-upload", formData);
-      if (response.status === 200) router.push("/");
+      if (response.status === 200) {
+        console.log("✅ Video uploaded successfully!");
+        toast.success("✅ Video uploaded successfully!");
+        router.push("/");
+      }
     } catch (error) {
       console.error("❌ Upload failed:", error);
+      toast.error("❌ Upload failed!");
     } finally {
       setIsUploading(false);
     }
@@ -36,6 +42,7 @@ export default function VideoUpload() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-base-300 via-base-200 to-base-100 p-6">
+      <Toaster position="top-center" reverseOrder={false} />
       <div className="card w-full max-w-3xl bg-base-100/70 backdrop-blur-lg border border-primary/20 shadow-2xl rounded-3xl transition-all hover:shadow-primary/30">
         <div className="card-body space-y-6">
           {/* 🏷️ Header */}
