@@ -12,7 +12,7 @@ export default function VideoUpload() {
   const [isUploading, setIsUploading] = useState(false);
   const router = useRouter();
 
-  const MAX_FILE_SIZE = 70 * 1024 * 1024; // 70MB
+  const MAX_FILE_SIZE = 70 * 1024 * 1024; // 70MB limit
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,32 +20,42 @@ export default function VideoUpload() {
     if (file.size > MAX_FILE_SIZE) return toast.error("File size too large.");
 
     setIsUploading(true);
+
     try {
-      // STEP 1️⃣ — Upload to Cloudinary
+      // 🩵 STEP 1 — Upload to Cloudinary
       const cloudinaryData = new FormData();
       cloudinaryData.append("file", file);
-      cloudinaryData.append("upload_preset", "ml_default"); // create one in Cloudinary if needed
+      cloudinaryData.append("upload_preset", "video_unsigned_upload"); // ✅ Must match your Cloudinary preset
       cloudinaryData.append("resource_type", "video");
 
-      const cloudinaryResponse = await fetch(
-        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/video/upload`,
-        {
-          method: "POST",
-          body: cloudinaryData,
-        }
-      );
+      const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/video/upload`;
+
+      const cloudinaryResponse = await fetch(cloudinaryUrl, {
+        method: "POST",
+        body: cloudinaryData,
+      });
+
+      // Handle Cloudinary errors
+      if (!cloudinaryResponse.ok) {
+        const errText = await cloudinaryResponse.text();
+        console.error("❌ Cloudinary Upload Error:", errText);
+        throw new Error(`Cloudinary upload failed: ${errText}`);
+      }
 
       const uploaded = await cloudinaryResponse.json();
 
-      if (!uploaded.public_id) throw new Error("Cloudinary upload failed");
+      if (!uploaded.public_id) {
+        console.error("❌ Invalid Cloudinary response:", uploaded);
+        throw new Error("Cloudinary upload failed: No public_id received.");
+      }
 
-      // STEP 2️⃣ — Save metadata to DB (Prisma API)
+      // 🩷 STEP 2 — Save metadata via Prisma API
       const formData = new FormData();
       formData.append("title", title);
       formData.append("description", description);
       formData.append("publicId", uploaded.public_id);
       formData.append("originalSize", file.size.toString());
-      formData.append("compressedSize", file.size.toString()); // same for now
+      formData.append("compressedSize", file.size.toString());
       formData.append("duration", uploaded.duration?.toString() || "0");
 
       const response = await axios.post("/api/video-upload", formData);
@@ -54,7 +64,7 @@ export default function VideoUpload() {
         toast.success("✅ Video uploaded successfully!");
         router.push("/home");
       } else {
-        throw new Error("Server responded with error");
+        throw new Error("Server responded with an error.");
       }
     } catch (error: any) {
       console.error("❌ Upload failed:", error);
