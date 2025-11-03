@@ -1,6 +1,21 @@
 "use client";
 
+import { useUser, RedirectToSignIn } from "@clerk/nextjs";
+
 export default function Home() {
+  const { isLoaded, isSignedIn } = useUser();
+
+  if (!isLoaded) {
+    // Wait until Clerk loads the user state
+    return null;
+  }
+
+  if (!isSignedIn) {
+    // Redirect to the login page if user not signed in
+    return <RedirectToSignIn />;
+  }
+
+  // If user is signed in, show your home content
   return (
     <main className="flex min-h-screen items-center justify-center bg-base-100 text-base-content">
       <div className="max-w-lg w-full p-10 rounded-box shadow-lg bg-base-200 space-y-6">
