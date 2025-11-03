@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
@@ -9,32 +10,55 @@ export default function VideoUpload() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isUploading, setIsUploading] = useState(false);
-
   const router = useRouter();
+
   const MAX_FILE_SIZE = 70 * 1024 * 1024; // 70MB
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file) return alert("Please select a video file.");
-    if (file.size > MAX_FILE_SIZE) return alert("File size too large.");
+    if (!file) return toast.error("Please select a video file.");
+    if (file.size > MAX_FILE_SIZE) return toast.error("File size too large.");
 
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("title", title);
-    formData.append("description", description);
-    formData.append("originalSize", file.size.toString());
-
     try {
+      // STEP 1️⃣ — Upload to Cloudinary
+      const cloudinaryData = new FormData();
+      cloudinaryData.append("file", file);
+      cloudinaryData.append("upload_preset", "ml_default"); // create one in Cloudinary if needed
+      cloudinaryData.append("resource_type", "video");
+
+      const cloudinaryResponse = await fetch(
+        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/video/upload`,
+        {
+          method: "POST",
+          body: cloudinaryData,
+        }
+      );
+
+      const uploaded = await cloudinaryResponse.json();
+
+      if (!uploaded.public_id) throw new Error("Cloudinary upload failed");
+
+      // STEP 2️⃣ — Save metadata to DB (Prisma API)
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("description", description);
+      formData.append("publicId", uploaded.public_id);
+      formData.append("originalSize", file.size.toString());
+      formData.append("compressedSize", file.size.toString()); // same for now
+      formData.append("duration", uploaded.duration?.toString() || "0");
+
       const response = await axios.post("/api/video-upload", formData);
+
       if (response.status === 200) {
-        console.log("✅ Video uploaded successfully!");
         toast.success("✅ Video uploaded successfully!");
-        router.push("/");
+        router.push("/home");
+      } else {
+        throw new Error("Server responded with error");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Upload failed:", error);
-      toast.error("❌ Upload failed!");
+      toast.error(`Upload failed: ${error.message || "Unknown error"}`);
     } finally {
       setIsUploading(false);
     }
@@ -45,7 +69,6 @@ export default function VideoUpload() {
       <Toaster position="top-center" reverseOrder={false} />
       <div className="card w-full max-w-3xl bg-base-100/70 backdrop-blur-lg border border-primary/20 shadow-2xl rounded-3xl transition-all hover:shadow-primary/30">
         <div className="card-body space-y-6">
-          {/* 🏷️ Header */}
           <div className="text-center space-y-2">
             <h1 className="text-4xl font-extrabold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               Upload Your Video
@@ -55,9 +78,7 @@ export default function VideoUpload() {
             </p>
           </div>
 
-          {/* 📄 Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Title */}
             <div>
               <label className="label">
                 <span className="label-text text-base-content/80">Title</span>
@@ -72,7 +93,6 @@ export default function VideoUpload() {
               />
             </div>
 
-            {/* Description */}
             <div>
               <label className="label">
                 <span className="label-text text-base-content/80">
@@ -87,7 +107,6 @@ export default function VideoUpload() {
               />
             </div>
 
-            {/* File Upload */}
             <div>
               <label className="label">
                 <span className="label-text text-base-content/80">
@@ -103,12 +122,10 @@ export default function VideoUpload() {
               />
             </div>
 
-            {/* Upload Progress */}
             {isUploading && (
               <progress className="progress progress-primary w-full mt-3"></progress>
             )}
 
-            {/* ✅ Centered Button */}
             <div className="flex justify-center pt-6">
               <button
                 type="submit"
