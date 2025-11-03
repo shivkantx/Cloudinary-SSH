@@ -1,162 +1,72 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
-import { getCldImageUrl, getCldVideoUrl } from "next-cloudinary";
-import { Download, Clock, FileDown, FileUp } from "lucide-react";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-import { filesize } from "filesize";
-import { Video } from "@/app/generated/prisma/wasm";
 
-dayjs.extend(relativeTime);
+import { Play, Heart, Share2, Eye } from "lucide-react";
+import { motion } from "framer-motion";
+
+interface Video {
+  thumbnail?: string;
+  title?: string;
+  description?: string;
+  views?: number | string;
+  duration?: string;
+}
 
 interface VideoCardProps {
   video: Video;
-  onDownload: (url: string, title: string) => void;
 }
 
-const VideoCard: React.FC<VideoCardProps> = ({ video, onDownload }) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const [previewError, setPreviewError] = useState(false);
-
-  const getThumbnailUrl = useCallback((publicId: string) => {
-    return getCldImageUrl({
-      src: publicId,
-      width: 400,
-      height: 225,
-      crop: "fill",
-      gravity: "auto",
-      format: "jpg",
-      quality: "auto",
-      assetType: "video",
-    });
-  }, []);
-
-  const getFullVideoUrl = useCallback((publicId: string) => {
-    return getCldVideoUrl({
-      src: publicId,
-      width: 1920,
-      height: 1080,
-    });
-  }, []);
-
-  const getPreviewUrl = useCallback((publicId: string) => {
-    return getCldVideoUrl({
-      src: publicId,
-      width: 400,
-      height: 225,
-      rawTransformations: [
-        "e_preview:duration_15:max_segments_9:min_segment_duration_1",
-      ],
-    });
-  }, []);
-
-  const formatSize = useCallback((size: number) => filesize(size), []);
-  const formatDuration = useCallback((seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.round(seconds % 60);
-    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-  }, []);
-
-  const compressionPercentage = Math.round(
-    (1 - Number(video.compressedSize) / Number(video.originalSize)) * 100
-  );
-
-  useEffect(() => {
-    setPreviewError(false);
-  }, [isHovered]);
-
-  const handlePreviewError = () => {
-    setPreviewError(true);
-  };
-
+const VideoCard: React.FC<VideoCardProps> = ({ video }) => {
   return (
-    <div
-      className="card bg-base-100/10 backdrop-blur-lg border border-primary/30 shadow-lg hover:shadow-primary/40 transition-all duration-300 rounded-2xl overflow-hidden hover:scale-[1.02]"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+    <motion.div
+      className="relative bg-gray-900 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group border border-gray-800"
+      whileHover={{ scale: 1.03 }}
     >
-      {/* 🎥 Video Preview / Thumbnail */}
-      <figure className="aspect-video relative overflow-hidden">
-        {isHovered ? (
-          previewError ? (
-            <div className="w-full h-full flex items-center justify-center bg-base-200 text-error">
-              Preview not available
-            </div>
-          ) : (
-            <video
-              src={getPreviewUrl(video.publicId)}
-              autoPlay
-              muted
-              loop
-              className="w-full h-full object-cover"
-              onError={handlePreviewError}
-            />
-          )
-        ) : (
-          <img
-            src={getThumbnailUrl(video.publicId)}
-            alt={video.title}
-            className="w-full h-full object-cover"
-          />
-        )}
-        <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md text-white px-2 py-1 rounded-md flex items-center gap-1 text-xs">
-          <Clock size={14} />{" "}
-          {formatDuration(video.duration as unknown as number)}
-        </div>
-      </figure>
+      {/* Thumbnail */}
+      <div className="relative">
+        <img
+          src={video.thumbnail || "/default-thumb.jpg"}
+          alt={video.title}
+          className="w-full h-56 object-cover transition-all duration-300 group-hover:brightness-75"
+        />
 
-      {/* 🧾 Card Content */}
-      <div className="card-body p-4 space-y-3">
-        <h2 className="card-title text-lg font-bold text-white/90">
-          {video.title}
-        </h2>
-        <p className="text-sm text-gray-400 line-clamp-2">
-          {video.description || "No description available."}
-        </p>
-        <p className="text-xs text-gray-500">
-          Uploaded {dayjs(video.createdAt).fromNow()}
-        </p>
-
-        {/* 📊 File Info */}
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="flex items-center gap-2">
-            <FileUp size={18} className="text-primary" />
-            <div>
-              <div className="font-semibold text-white/80">Original</div>
-              <div className="text-gray-400">
-                {formatSize(Number(video.originalSize))}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <FileDown size={18} className="text-secondary" />
-            <div>
-              <div className="font-semibold text-white/80">Compressed</div>
-              <div className="text-gray-400">
-                {formatSize(Number(video.compressedSize))}
-              </div>
-            </div>
+        {/* Overlay Play Button */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/40">
+          <div className="bg-white/20 backdrop-blur-lg p-4 rounded-full">
+            <Play className="w-8 h-8 text-white" />
           </div>
         </div>
 
-        {/* 📦 Compression Info + Download */}
-        <div className="flex justify-between items-center pt-3 border-t border-white/10">
-          <div className="text-sm font-medium text-white/80">
-            Compression:{" "}
-            <span className="text-accent">{compressionPercentage}%</span>
-          </div>
-          <button
-            onClick={() =>
-              onDownload(getFullVideoUrl(video.publicId), video.title)
-            }
-            className="btn btn-primary btn-sm btn-glass hover:scale-105 transition-transform"
-          >
-            <Download size={16} />
-            Download
+        {/* Top-right icons */}
+        <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+          <button className="p-2 bg-black/60 rounded-full hover:bg-black/80 transition">
+            <Heart className="w-4 h-4 text-white" />
+          </button>
+          <button className="p-2 bg-black/60 rounded-full hover:bg-black/80 transition">
+            <Share2 className="w-4 h-4 text-white" />
           </button>
         </div>
       </div>
-    </div>
+
+      {/* Video Info */}
+      <div className="p-4 flex flex-col gap-2">
+        <h3 className="text-lg font-semibold text-white line-clamp-1">
+          {video.title || "Untitled Video"}
+        </h3>
+        <p className="text-sm text-gray-400 line-clamp-2">
+          {video.description || "No description available."}
+        </p>
+
+        {/* Views and duration */}
+        <div className="flex justify-between items-center mt-3 text-gray-400 text-sm">
+          <div className="flex items-center gap-1">
+            <Eye className="w-4 h-4" /> <span>{video.views || "0"} views</span>
+          </div>
+          <span className="bg-gray-800 px-3 py-1 rounded-full text-xs">
+            {video.duration || "00:00"}
+          </span>
+        </div>
+      </div>
+    </motion.div>
   );
 };
 

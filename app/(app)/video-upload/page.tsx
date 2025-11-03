@@ -25,7 +25,10 @@ export default function VideoUpload() {
       // 🩵 STEP 1 — Upload to Cloudinary
       const cloudinaryData = new FormData();
       cloudinaryData.append("file", file);
-      cloudinaryData.append("upload_preset", "video_unsigned_upload"); // ✅ Must match your Cloudinary preset
+      cloudinaryData.append(
+        "upload_preset",
+        process.env.NEXT_PUBLIC_CLOUDINARY_PRESET as string
+      );
       cloudinaryData.append("resource_type", "video");
 
       const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/video/upload`;
@@ -35,7 +38,6 @@ export default function VideoUpload() {
         body: cloudinaryData,
       });
 
-      // Handle Cloudinary errors
       if (!cloudinaryResponse.ok) {
         const errText = await cloudinaryResponse.text();
         console.error("❌ Cloudinary Upload Error:", errText);
@@ -45,7 +47,6 @@ export default function VideoUpload() {
       const uploaded = await cloudinaryResponse.json();
 
       if (!uploaded.public_id) {
-        console.error("❌ Invalid Cloudinary response:", uploaded);
         throw new Error("Cloudinary upload failed: No public_id received.");
       }
 
@@ -89,48 +90,29 @@ export default function VideoUpload() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="label">
-                <span className="label-text text-base-content/80">Title</span>
-              </label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="input input-bordered input-primary w-full"
-                placeholder="Enter video title"
-                required
-              />
-            </div>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="input input-bordered input-primary w-full"
+              placeholder="Enter video title"
+              required
+            />
 
-            <div>
-              <label className="label">
-                <span className="label-text text-base-content/80">
-                  Description
-                </span>
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="textarea textarea-bordered textarea-primary w-full"
-                placeholder="Write something about this video..."
-              />
-            </div>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="textarea textarea-bordered textarea-primary w-full"
+              placeholder="Write something about this video..."
+            />
 
-            <div>
-              <label className="label">
-                <span className="label-text text-base-content/80">
-                  Video File
-                </span>
-              </label>
-              <input
-                type="file"
-                accept="video/*"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-                className="file-input file-input-bordered file-input-primary w-full"
-                required
-              />
-            </div>
+            <input
+              type="file"
+              accept="video/*"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              className="file-input file-input-bordered file-input-primary w-full"
+              required
+            />
 
             {isUploading && (
               <progress className="progress progress-primary w-full mt-3"></progress>
