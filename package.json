@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.34.0",
-    "@prisma/client": "^7.0.1",
+    "@prisma/client": "^4.15.0",
     "axios": "^1.13.1",
     "cloudinary": "^2.8.0",
     "dayjs": "^1.11.19",
@@ -33,7 +33,7 @@
     "daisyui": "^5.3.10",
     "eslint": "^9",
     "eslint-config-next": "16.0.0",
-    "prisma": "^7.0.1",
+    "prisma": "^4.15.0",
     "tailwindcss": "^4",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"
